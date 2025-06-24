@@ -1,0 +1,2 @@
+# frontend-david-gosal
+SOAL TEST FRONTEND DEVELOPER DEUS
