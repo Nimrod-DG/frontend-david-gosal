@@ -43,7 +43,7 @@ The application integrates with the following APIs:
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Nimrod-DG/frontend-david-gosal.git
    cd frontend-test-app
    ```
 
