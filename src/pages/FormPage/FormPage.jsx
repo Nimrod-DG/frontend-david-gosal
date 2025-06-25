@@ -29,8 +29,7 @@ const FormPage = () => {
   } = useSelector((state) => state.form);
   
   const total = useSelector(selectTotalPrice);
-
-  // Load initial data and saved state
+  
   useEffect(() => {
     if (isAuthenticated) {
       const savedState = JSON.parse(localStorage.getItem('formState')) || {};
@@ -40,7 +39,6 @@ const FormPage = () => {
     }
   }, [isAuthenticated, dispatch]);
 
-  // Restore country and load its ports
   useEffect(() => {
     if (hasMounted && savedFormState?.selectedCountry && countries.length > 0) {
       const country = countries.find(
@@ -54,7 +52,6 @@ const FormPage = () => {
     }
   }, [countries, hasMounted, savedFormState, dispatch]);
 
-  // Restore port and load its goods
   useEffect(() => {
     if (hasMounted && savedFormState?.selectedPort && ports.length > 0) {
       const port = ports.find(
@@ -68,7 +65,6 @@ const FormPage = () => {
     }
   }, [ports, hasMounted, savedFormState, dispatch]);
 
-  // Restore goods selection
   useEffect(() => {
     if (hasMounted && savedFormState?.selectedGood && goods.length > 0) {
       const good = goods.find(
@@ -81,7 +77,6 @@ const FormPage = () => {
     }
   }, [goods, hasMounted, savedFormState, dispatch]);
 
-  // Save form state to localStorage
   useEffect(() => {
     if (hasMounted && isAuthenticated) {
       localStorage.setItem('formState', JSON.stringify({
@@ -92,7 +87,6 @@ const FormPage = () => {
     }
   }, [selectedCountry, selectedPort, selectedGood, hasMounted, isAuthenticated]);
 
-  // Clear form when logging out
   useEffect(() => {
     if (!isAuthenticated && hasMounted) {
       dispatch(clearForm());
