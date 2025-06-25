@@ -124,7 +124,6 @@ src/
 - Network timeout handling
 - API error responses
 - User-friendly error messages
-- Retry functionality for failed requests
 
 ## Environment Variables
 
