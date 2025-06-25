@@ -9,7 +9,6 @@ A comprehensive React application built for frontend testing with autocomplete f
 - 📦 **Product Selection** - Dynamic loading based on selected port
 - 💰 **Price Calculation** - Automatic total calculation with discount
 - 🌙 **Dark Mode** - Toggle between light and dark themes
-- 📱 **Responsive Design** - Works on all device sizes
 - ⚡ **State Management** - Redux Toolkit for efficient state management
 - 🎨 **Modern UI** - Material-UI components with custom styling
 - 🔄 **Error Handling** - Comprehensive error handling and loading states
@@ -37,28 +36,23 @@ The application integrates with the following APIs:
 ### Prerequisites
 
 - Node.js (version 16 or higher)
-- npm or yarn package manager
 
 ### Steps
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone <[repository-url](https://github.com/Nimrod-DG/frontend-david-gosal.git)>
    cd frontend-test-app
    ```
 
 2. **Install dependencies**
    ```bash
    npm install
-   # or
-   yarn install
    ```
 
 3. **Start the development server**
    ```bash
    npm run dev
-   # or
-   yarn dev
    ```
 
 4. **Open your browser**
@@ -136,8 +130,6 @@ src/
 
 ```bash
 npm run build
-# or
-yarn build
 ```
 
 The built files will be in the `dist` directory.
@@ -146,19 +138,6 @@ The built files will be in the `dist` directory.
 
 No environment variables are required for this demo application as it uses hardcoded API endpoints.
 
-## Browser Support
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
 
 ## License
 
