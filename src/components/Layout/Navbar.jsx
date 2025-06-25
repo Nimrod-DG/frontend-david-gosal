@@ -2,10 +2,11 @@ import React from 'react'
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { AppBar, Toolbar, Typography, Button, IconButton, Menu, MenuItem, Box, Switch, FormControlLabel,} from '@mui/material'
-import {AccountCircle, Dashboard, Assignment, Logout, DarkMode,LightMode,} from '@mui/icons-material'
+import { AppBar, Toolbar, Typography, Button, IconButton, Menu, MenuItem, Box, Switch, FormControlLabel } from '@mui/material'
+import { AccountCircle, Dashboard, Assignment, Logout, DarkMode, LightMode } from '@mui/icons-material'
 import { logout } from '../../store/slices/authSlice'
-import { toggleTheme } from '../../store/slices/themeSlice';
+import { toggleTheme } from '../../store/slices/themeSlice'
+import { clearForm } from '../../store/slices/formSlice' 
 
 const Navbar = () => {
   const { mode } = useSelector((state) => state.theme);
@@ -13,7 +14,6 @@ const Navbar = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useSelector((state) => state.auth)
-  const { darkMode } = useSelector((state) => state.theme)
   const [anchorEl, setAnchorEl] = useState(null)
   
   const handleMenu = (event) => {
@@ -25,6 +25,8 @@ const Navbar = () => {
   }
 
   const handleLogout = () => {
+    dispatch(clearForm())
+    localStorage.removeItem('formState')
     dispatch(logout())
     handleClose()
     navigate('/login')
@@ -69,11 +71,11 @@ const Navbar = () => {
           <FormControlLabel
             control={
               <Switch
-            checked={mode === 'dark'}
-            onChange={() => dispatch(toggleTheme())}
-            icon={<LightMode />}
-            checkedIcon={<DarkMode />}
-          />
+                checked={mode === 'dark'}
+                onChange={handleThemeToggle}
+                icon={<LightMode />}
+                checkedIcon={<DarkMode />}
+              />
             }
             label=""
           />

@@ -43,7 +43,7 @@ The application integrates with the following APIs:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Nimrod-DG/frontend-david-gosal.git
+   git clone <repository-url>
    cd frontend-test-app
    ```
 
@@ -132,6 +132,16 @@ src/
 - User-friendly error messages
 - Retry functionality for failed requests
 
+## Build for Production
+
+```bash
+npm run build
+# or
+yarn build
+```
+
+The built files will be in the `dist` directory.
+
 ## Environment Variables
 
 No environment variables are required for this demo application as it uses hardcoded API endpoints.
@@ -142,3 +152,14 @@ No environment variables are required for this demo application as it uses hardc
 - Firefox (latest)
 - Safari (latest)
 - Edge (latest)
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## License
+
+This project is for demonstration purposes only.

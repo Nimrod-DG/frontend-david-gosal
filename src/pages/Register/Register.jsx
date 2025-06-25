@@ -1,16 +1,28 @@
-import { useState } from 'react'
-import React from 'react'
+import React, { useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import {Container, Paper, TextField, Button, Typography, Box, InputAdornment, IconButton,} from '@mui/material'
+import {
+  Container,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Box,
+  Alert,
+  InputAdornment,
+  IconButton,
+} from '@mui/material'
 import { Person, Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material'
+import { registerUser } from '../../store/slices/authSlice'
 import toast from 'react-hot-toast'
 
 const Register = () => {
+  const dispatch = useDispatch()
   const navigate = useNavigate()
+  const { loading, error } = useSelector((state) => state.auth)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
 
   const {
     register,
@@ -22,32 +34,14 @@ const Register = () => {
   const password = watch('password')
 
   const onSubmit = async (data) => {
-    setLoading(true)
+    const result = await dispatch(registerUser(data))
     
-    setTimeout(() => {
-      const users = JSON.parse(localStorage.getItem('users') || '[]')
-      const existingUser = users.find(u => u.email === data.email)
-      
-      if (existingUser) {
-        toast.error('User already exists with this email')
-        setLoading(false)
-        return
-      }
-      
-      const newUser = {
-        id: Date.now(),
-        name: data.name,
-        email: data.email,
-        password: data.password,
-      }
-      
-      users.push(newUser)
-      localStorage.setItem('users', JSON.stringify(users))
-      
+    if (registerUser.fulfilled.match(result)) {
       toast.success('Registration successful! Please login.')
       navigate('/login')
-      setLoading(false)
-    }, 1000)
+    } else if (registerUser.rejected.match(result)) {
+      toast.error(result.payload || 'Registration failed')
+    }
   }
 
   return (
@@ -64,6 +58,12 @@ const Register = () => {
           <Typography component="h1" variant="h4" align="center" gutterBottom>
             Sign Up
           </Typography>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
           <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 1 }}>
             <TextField

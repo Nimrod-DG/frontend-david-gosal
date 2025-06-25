@@ -18,32 +18,26 @@ const Dashboard = () => {
       try {
         setLoading(true);
         
-        const [countriesRes, portsRes, goodsRes] = await Promise.all([
-          apiService.getCountries(),
-          apiService.getAllPorts(),
-          apiService.getAllGoods()
-        ]);
-
-        const numericRegex = /^\d+$/;
+        const validCountries = await apiService.getCountries();
         
-        const validCountries = countriesRes.filter(c => 
-        typeof c.nama_negara === 'string' && 
-        c.nama_negara.length > 0 && 
-        !numericRegex.test(c.nama_negara)
+        const portsPromises = validCountries.map(country => 
+          apiService.getPortsByCountry(country.id_negara)
         );
         
-        const validPorts = portsRes.filter(p => 
-          typeof p.nama_pelabuhan === 'string' && p.nama_pelabuhan.length > 0 && !numericRegex.test(p.nama_pelabuhan)
+        const portsResults = await Promise.all(portsPromises);
+        const allValidPorts = portsResults.flat();
+        
+        const goodsPromises = allValidPorts.map(port => 
+          apiService.getGoodsByPort(port.id_pelabuhan)
         );
         
-        const validGoods = goodsRes.filter(g => 
-          typeof g.nama_barang === 'string' && g.nama_barang.length > 0 && !numericRegex.test(g.nama_barang)
-        );
+        const goodsResults = await Promise.all(goodsPromises);
+        const allValidGoods = goodsResults.flat();
 
         setStats({
           countries: validCountries.length,
-          ports: validPorts.length,
-          goods: validGoods.length,
+          ports: allValidPorts.length,
+          goods: allValidGoods.length,
           lastUpdated: new Date().toLocaleTimeString()
         });
         
@@ -158,67 +152,67 @@ const Dashboard = () => {
   return (
     <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
       <Paper square elevation={0} sx={{
-  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-  py: 3,
-  mb: 4,
-  borderRadius: '0 0 16px 16px',
-  boxShadow: theme.shadows[4],
-  borderBottom: `4px solid ${theme.palette.primary.light}`
-}}>
-  <Container maxWidth="xl">
-    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} 
-      alignItems={{ xs: 'flex-start', sm: 'center' }} 
-      justifyContent="space-between"
-      gap={2}
-    >
-      <Box>
-        <Typography variant="h4" fontWeight="bold" color="white" gutterBottom>
-          Dashboard Overview
-        </Typography>
-        <Typography variant="subtitle1" color="rgba(255,255,255,0.85)" sx={{ mb: { xs: 1, sm: 0 } }}>
-          Welcome back, {user?.name || 'User'}!
-        </Typography>
-      </Box>
-      
-      <Box display="flex" alignItems="center" gap={2} sx={{ 
-        flexWrap: 'wrap',
-        justifyContent: { xs: 'flex-start', sm: 'flex-end' }
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+        py: 3,
+        mb: 4,
+        borderRadius: '0 0 16px 16px',
+        boxShadow: theme.shadows[4],
+        borderBottom: `4px solid ${theme.palette.primary.light}`
       }}>
-        <Chip 
-          label="System Online" 
-          size="small"
-          icon={<CheckCircle fontSize="small" />}
-          sx={{ 
-            bgcolor: 'rgba(255,255,255,0.15)',
-            color: 'white',
-            '& .MuiChip-icon': { 
-              color: theme.palette.success.light,
-              marginLeft: '8px'
-            },
-            fontWeight: 500
-          }}
-        />
-        
-        {!loading && stats?.lastUpdated && (
-          <Box display="flex" alignItems="center" gap={1} sx={{
-            bgcolor: 'rgba(0,0,0,0.1)',
-            px: 1.5,
-            py: 0.5,
-            borderRadius: '16px'
-          }}>
-            <Schedule fontSize="small" sx={{ color: 'rgba(255,255,255,0.8)' }} />
-            <Typography variant="caption" sx={{ 
-              color: 'rgba(255,255,255,0.9)',
-              fontWeight: 500
+        <Container maxWidth="xl">
+          <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} 
+            alignItems={{ xs: 'flex-start', sm: 'center' }} 
+            justifyContent="space-between"
+            gap={2}
+          >
+            <Box>
+              <Typography variant="h4" fontWeight="bold" color="white" gutterBottom>
+                Dashboard Overview
+              </Typography>
+              <Typography variant="subtitle1" color="rgba(255,255,255,0.85)" sx={{ mb: { xs: 1, sm: 0 } }}>
+                Welcome back, {user?.name || 'User'}!
+              </Typography>
+            </Box>
+            
+            <Box display="flex" alignItems="center" gap={2} sx={{ 
+              flexWrap: 'wrap',
+              justifyContent: { xs: 'flex-start', sm: 'flex-end' }
             }}>
-              Updated: {stats.lastUpdated}
-            </Typography>
+              <Chip 
+                label="System Online" 
+                size="small"
+                icon={<CheckCircle fontSize="small" />}
+                sx={{ 
+                  bgcolor: 'rgba(255,255,255,0.15)',
+                  color: 'white',
+                  '& .MuiChip-icon': { 
+                    color: theme.palette.success.light,
+                    marginLeft: '8px'
+                  },
+                  fontWeight: 500
+                }}
+              />
+              
+              {!loading && stats?.lastUpdated && (
+                <Box display="flex" alignItems="center" gap={1} sx={{
+                  bgcolor: 'rgba(0,0,0,0.1)',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: '16px'
+                }}>
+                  <Schedule fontSize="small" sx={{ color: 'rgba(255,255,255,0.8)' }} />
+                  <Typography variant="caption" sx={{ 
+                    color: 'rgba(255,255,255,0.9)',
+                    fontWeight: 500
+                  }}>
+                    Updated: {stats.lastUpdated}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           </Box>
-        )}
-      </Box>
-    </Box>
-  </Container>
-</Paper>
+        </Container>
+      </Paper>
 
       <Container maxWidth="xl" sx={{ pb: 8 }}>
         <Grid container spacing={3} mb={4}>
@@ -228,7 +222,7 @@ const Dashboard = () => {
               value={stats?.countries || '...'}
               icon={<Public />}
               color={theme.palette.primary.main}
-              description="Available worldwide"
+              description="Valid countries with ports"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
@@ -237,7 +231,7 @@ const Dashboard = () => {
               value={stats?.ports || '...'}
               icon={<LocalShipping />}
               color={theme.palette.success.main}
-              description="Active shipping hubs"
+              description="Active ports in valid countries"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
@@ -246,7 +240,7 @@ const Dashboard = () => {
               value={stats?.goods || '...'}
               icon={<Inventory />}
               color={theme.palette.warning.main}
-              description="Items in catalog"
+              description="Goods in active ports"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>

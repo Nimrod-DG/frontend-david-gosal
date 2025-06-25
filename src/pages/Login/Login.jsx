@@ -1,5 +1,4 @@
-import React from 'react'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
@@ -15,7 +14,7 @@ import {
   IconButton,
 } from '@mui/material'
 import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material'
-import { loginStart, loginSuccess, loginFailure } from '../../store/slices/authSlice'
+import { loginUser } from '../../store/slices/authSlice'
 import toast from 'react-hot-toast'
 
 const Login = () => {
@@ -31,14 +30,9 @@ const Login = () => {
   } = useForm()
 
   const onSubmit = async (data) => {
-  dispatch(loginStart())
-  
-  setTimeout(() => {
-    const users = JSON.parse(localStorage.getItem('users') || '[]')
-    const user = users.find(u => u.email === data.email && u.password === data.password)
+    const result = await dispatch(loginUser(data))
     
-    if (user) {
-      dispatch(loginSuccess({ email: user.email, name: user.name }))
+    if (loginUser.fulfilled.match(result)) {
       toast.success('Login successful!', {
         style: {
           background: '#4caf50', 
@@ -51,14 +45,12 @@ const Login = () => {
         position: 'top-center' 
       })
       navigate('/dashboard')
-    } else {
-      dispatch(loginFailure('Invalid email or password'))
-      toast.error('Invalid email or password', {
+    } else if (loginUser.rejected.match(result)) {
+      toast.error(result.payload || 'Invalid email or password', {
         position: 'top-center'
       })
     }
-  }, 1000)
-}
+  }
 
   return (
     <Container component="main" maxWidth="sm">

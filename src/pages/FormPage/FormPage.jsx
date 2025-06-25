@@ -1,9 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {Container, Typography, Card, CardContent, Grid, TextField, Autocomplete, Box,Alert,Chip,} from '@mui/material';
-import { apiService } from '../../services/api';
-import {setLoading,setError,setCountries,setPorts, setGoods,setSelectedCountry,setSelectedPort,setSelectedGood,clearForm,
-        resetPorts,resetGoods,} from '../../store/slices/formSlice';
+import { Container, Typography, Card, CardContent, Grid, TextField, Autocomplete, Box, Alert, Chip } from '@mui/material';
+import { 
+  loadCountries, 
+  loadPorts, 
+  loadGoods, 
+  setSelectedCountry, 
+  setSelectedPort, 
+  setSelectedGood, 
+  clearForm,
+  setTouchedField,
+  selectTotalPrice,
+  formatDisplay,
+  formatCurrency
+} from '../../store/slices/formSlice';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import ErrorMessage from '../../components/UI/ErrorMessage';
 import toast, { Toaster } from 'react-hot-toast';
@@ -11,198 +21,94 @@ import toast, { Toaster } from 'react-hot-toast';
 const FormPage = () => {
   const dispatch = useDispatch();
   const [hasMounted, setHasMounted] = useState(false);
-  const [total, setTotal] = useState(0);
   
-  const {countries, ports, goods, selectedCountry, selectedPort, selectedGood, loading, error,} = useSelector((state) => state.form);
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { 
+    countries, 
+    ports, 
+    goods, 
+    selectedCountry, 
+    selectedPort, 
+    selectedGood, 
+    loading, 
+    error,
+    touchedFields
+  } = useSelector((state) => state.form);
   
+  const total = useSelector(selectTotalPrice);
+
   useEffect(() => {
-    if (!hasMounted) {
-      loadCountries();
+    if (isAuthenticated) {
+      const savedFormState = JSON.parse(localStorage.getItem('formState')) || {};
+      if (savedFormState.selectedCountry) dispatch(setSelectedCountry(savedFormState.selectedCountry));
+      if (savedFormState.selectedPort) dispatch(setSelectedPort(savedFormState.selectedPort));
+      if (savedFormState.selectedGood) dispatch(setSelectedGood(savedFormState.selectedGood));
+      dispatch(loadCountries());
       setHasMounted(true);
     }
-  }, [hasMounted]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    if (selectedGood) {
-      const price = selectedGood.harga || 0;
-      const discount = selectedGood.diskon || 0;
-      setTotal(price - (price * (discount / 100)));
-    } else {
-      setTotal(0);
+    if (hasMounted && isAuthenticated) {
+      localStorage.setItem('formState', JSON.stringify({
+        selectedCountry,
+        selectedPort,
+        selectedGood
+      }));
     }
-  }, [selectedGood]);
+  }, [selectedCountry, selectedPort, selectedGood, hasMounted, isAuthenticated]);
 
-  const loadCountries = async () => {
-    try {
-      dispatch(setLoading(true));
-      dispatch(setError(null));
-      const data = await apiService.getCountries();
-      dispatch(setCountries(data));
-    } catch (error) {
-      dispatch(setError(error.message));
-      toast.error('Failed to load countries', {
-        id: 'countries-error',
-        position: 'top-center',
-        duration: 3000,
-        style: {
-          background: '#FF3333',
-          color: '#fff',
-        },
-      });
-    } finally {
-      dispatch(setLoading(false));
+  useEffect(() => {
+    if (!isAuthenticated && hasMounted) {
+      dispatch(clearForm());
+      localStorage.removeItem('formState');
     }
-  };
+  }, [isAuthenticated, hasMounted]);
 
-  const loadPorts = async (countryId) => {
-    try {
-      dispatch(setLoading(true));
-      dispatch(setError(null));
-      dispatch(resetPorts());
-      dispatch(resetGoods());
-      dispatch(setSelectedPort(null));
-      dispatch(setSelectedGood(null));
-      
-      const data = await apiService.getPortsByCountry(countryId);
-      dispatch(setPorts(data));
-      
-      if (data.length === 0) {
-        toast('No ports available for this country', {
-          id: 'ports-toast',
-          position: 'top-center',
-          duration: 3000,
-          style: {
-            background: '#ffcc00',
-            color: '#000',
-          },
-        });
+  const handleSelectionChange = (type, newValue) => {
+    dispatch(setTouchedField({ field: type, touched: true }));
+    
+    if (type === 'country') {
+      dispatch(setSelectedCountry(newValue));
+      if (newValue) {
+        dispatch(loadPorts(newValue.id_negara));
       }
-    } catch (error) {
-      dispatch(setError(error.message));
-      toast.error('Failed to load ports', {
-        id: 'ports-error',
-        position: 'top-center',
-        duration: 3000,
-        style: {
-          background: '#FF3333',
-          color: '#fff',
-        },
-      });
-    } finally {
-      dispatch(setLoading(false));
-    }
-  };
-
-  const loadGoods = async (portId) => {
-    try {
-      dispatch(setLoading(true));
-      dispatch(setError(null));
-      dispatch(resetGoods());
-      dispatch(setSelectedGood(null));
-      
-      const data = await apiService.getGoodsByPort(portId);
-      dispatch(setGoods(data));
-      
-      if (data.length === 0) {
-        toast('No products available at this port', {
-          id: 'goods-info',
-          position: 'top-center',
-          duration: 3000,
-          style: {
-            background: '#ffcc00',
-            color: '#000',
-          },
-        });
+    } 
+    else if (type === 'port') {
+      dispatch(setSelectedPort(newValue));
+      if (newValue) {
+        dispatch(loadGoods(newValue.id_pelabuhan));
       }
-    } catch (error) {
-      dispatch(setError(error.message));
-      toast.error(
-        error.message.includes('No data') 
-          ? 'Server returned no data' 
-          : 'Error loading products',
-        { 
-          id: 'goods-error',
-          position: 'top-center',
-          duration: 3000,
-          style: {
-            background: '#FF3333',
-            color: '#fff',
-          },
-        }
-      );
-    } finally {
-      dispatch(setLoading(false));
+    } 
+    else {
+      dispatch(setSelectedGood(newValue));
     }
-  };
-
-  const handleCountryChange = (event, newValue) => {
-    dispatch(setSelectedCountry(newValue));
-    if (newValue) {
-      dispatch(resetPorts());
-      loadPorts(newValue.id_negara);
-    } else {
-      dispatch(resetPorts());
-    }
-  };
-
-  const handlePortChange = (event, newValue) => {
-    dispatch(setSelectedPort(newValue));
-    if (newValue) {
-      dispatch(resetGoods());
-      loadGoods(newValue.id_pelabuhan);
-    } else {
-      dispatch(resetGoods());
-    }
-  };
-
-  const handleGoodChange = (event, newValue) => {
-    dispatch(setSelectedGood(newValue));
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(amount);
   };
 
   const handleRetry = () => {
     dispatch(clearForm());
-    loadCountries();
+    dispatch(loadCountries());
+    localStorage.removeItem('formState');
   };
 
-  if (loading && countries.length === 0) {
-    return <LoadingSpinner message="Loading countries..." />;
-  }
-
+  // UI components
   const SelectionSummaryItem = ({ label, value, color }) => (
     <Box sx={{ mb: 2 }}>
       <Typography variant="body2" color="text.secondary" gutterBottom>
         {label}
       </Typography>
-      {value ? (
-        <Chip label={value} color={color} size="small" />
-      ) : (
-        <Typography variant="body2">Not selected</Typography>
-      )}
+      {value ? <Chip label={value} color={color} size="small" /> : <Typography variant="body2">Not selected</Typography>}
     </Box>
   );
 
+  if (loading && countries.length === 0) {
+    return <LoadingSpinner message="Loading countries..." />;
+  }
+
   return (
     <Container maxWidth="lg">
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          success: {
-            duration: 3000,
-          },
-          error: {
-            duration: 3000,
-          },
-        }}
-      />
-
+      <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
+      
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Product Selection Form
@@ -227,106 +133,75 @@ const FormPage = () => {
               </Typography>
 
               <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <Autocomplete
-                    options={countries}
-                    getOptionLabel={(option) => option.nama_negara || ''}
-                    value={selectedCountry}
-                    onChange={handleCountryChange}
-                    loading={loading}
-                    isOptionEqualToValue={(option, value) => 
-                      option.id_negara === value.id_negara
-                    }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Country / Negara"
-                        placeholder="Select a country..."
-                        required
-                        error={!selectedCountry}
-                        helperText={!selectedCountry ? "Please select a country" : ""}
-                      />
-                    )}
-                    renderOption={(props, option) => (
-                      <Box component="li" {...props}>
-                        <Typography variant="body1">
-                          {option.nama_negara}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" ml={1}>
-                          {option.kode_negara}
-                        </Typography>
-                      </Box>
-                    )}
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Autocomplete
-                    options={ports}
-                    getOptionLabel={(option) => option.nama_pelabuhan || ''}
-                    value={selectedPort}
-                    onChange={handlePortChange}
-                    disabled={!selectedCountry}
-                    loading={loading}
-                    isOptionEqualToValue={(option, value) => 
-                      option.id_pelabuhan === value.id_pelabuhan
-                    }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Port / Pelabuhan"
-                        placeholder={selectedCountry ? "Select a port..." : "First select a country"}
-                        required
-                        error={selectedCountry && !selectedPort}
-                        helperText={selectedCountry && !selectedPort ? "Please select a port" : ""}
-                      />
-                    )}
-                    renderOption={(props, option) => (
-                      <Box component="li" {...props}>
-                        <Typography variant="body1">
-                          {option.nama_pelabuhan}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" ml={1}>
-                          {option.id_pelabuhan}
-                        </Typography>
-                      </Box>
-                    )}
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Autocomplete
-                    options={goods}
-                    getOptionLabel={(option) => option.nama_barang || ''}
-                    value={selectedGood}
-                    onChange={handleGoodChange}
-                    disabled={!selectedPort}
-                    loading={loading}
-                    isOptionEqualToValue={(option, value) => 
-                      option.id_barang === value.id_barang
-                    }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Product / Barang"
-                        placeholder={selectedPort ? "Select a product..." : "First select a port"}
-                        required
-                        error={selectedPort && !selectedGood}
-                        helperText={selectedPort && !selectedGood ? "Please select a product" : ""}
-                      />
-                    )}
-                    renderOption={(props, option) => (
-                      <Box component="li" {...props}>
-                        <Typography variant="body1">
-                          {option.nama_barang}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" ml={1}>
-                          {formatCurrency(option.harga)} | {option.diskon}%
-                        </Typography>
-                      </Box>
-                    )}
-                  />
-                </Grid>
+                {['country', 'port', 'goods'].map((type) => (
+                  <Grid item xs={12} key={type}>
+                    <Autocomplete
+                      options={type === 'country' ? countries : 
+                               type === 'port' ? ports : goods}
+                      getOptionLabel={(option) => 
+                        formatDisplay(option[`id_${type === 'country' ? 'negara' : type === 'port' ? 'pelabuhan' : 'barang'}`], 
+                                    option[`nama_${type === 'country' ? 'negara' : type === 'port' ? 'pelabuhan' : 'barang'}`])
+                      }
+                      value={type === 'country' ? selectedCountry : 
+                            type === 'port' ? selectedPort : selectedGood}
+                      onChange={(e, newValue) => handleSelectionChange(type, newValue)}
+                      loading={loading}
+                      disabled={type === 'port' ? !selectedCountry : type === 'goods' ? !selectedPort : false}
+                      isOptionEqualToValue={(option, value) => 
+                        option[`id_${type === 'country' ? 'negara' : type === 'port' ? 'pelabuhan' : 'barang'}`] === 
+                        value[`id_${type === 'country' ? 'negara' : type === 'port' ? 'pelabuhan' : 'barang'}`]
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label={`${type.charAt(0).toUpperCase() + type.slice(1)} / ${
+                            type === 'country' ? 'Negara' : type === 'port' ? 'Pelabuhan' : 'Barang'
+                          }`}
+                          placeholder={
+                            type === 'port' ? (selectedCountry ? "Select a port..." : "First select a country") :
+                            type === 'goods' ? (selectedPort ? "Select a product..." : "First select a port") :
+                            "Select a country..."
+                          }
+                          required
+                          error={
+                            (touchedFields[type] && !(type === 'country' ? selectedCountry : 
+                             type === 'port' ? selectedPort : selectedGood)) &&
+                            (type === 'country' || (type === 'port' && selectedCountry) || 
+                             (type === 'goods' && selectedPort))
+                          }
+                          helperText={
+                            touchedFields[type] && 
+                            !(type === 'country' ? selectedCountry : 
+                              type === 'port' ? selectedPort : selectedGood) &&
+                            (type === 'country' || (type === 'port' && selectedCountry) || 
+                             (type === 'goods' && selectedPort)) ?
+                            `Please select a ${type}` : ""
+                          }
+                        />
+                      )}
+                      renderOption={(props, option) => (
+                        <Box component="li" {...props}>
+                          <Typography variant="body1">
+                            {formatDisplay(
+                              option[`id_${type === 'country' ? 'negara' : type === 'port' ? 'pelabuhan' : 'barang'}`],
+                              option[`nama_${type === 'country' ? 'negara' : type === 'port' ? 'pelabuhan' : 'barang'}`]
+                            )}
+                          </Typography>
+                          {type === 'country' && option.kode_negara && (
+                            <Typography variant="caption" color="text.secondary" ml={1}>
+                              {option.kode_negara}
+                            </Typography>
+                          )}
+                          {type === 'goods' && (
+                            <Typography variant="caption" color="text.secondary" ml={1}>
+                              {formatCurrency(option.harga)} | {option.diskon}%
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
+                    />
+                  </Grid>
+                ))}
 
                 {selectedGood && (
                   <>
@@ -390,19 +265,19 @@ const FormPage = () => {
 
               <SelectionSummaryItem 
                 label="Country"
-                value={selectedCountry?.nama_negara}
+                value={selectedCountry ? formatDisplay(selectedCountry.id_negara, selectedCountry.nama_negara) : null}
                 color="primary"
               />
 
               <SelectionSummaryItem
                 label="Port"
-                value={selectedPort?.nama_pelabuhan}
+                value={selectedPort ? formatDisplay(selectedPort.id_pelabuhan, selectedPort.nama_pelabuhan) : null}
                 color="secondary"
               />
 
               <SelectionSummaryItem
                 label="Product"
-                value={selectedGood?.nama_barang}
+                value={selectedGood ? formatDisplay(selectedGood.id_barang, selectedGood.nama_barang) : null}
                 color="success"
               />
 

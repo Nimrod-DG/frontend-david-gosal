@@ -1,7 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { createTheme } from '@mui/material/styles';
 
-// Get mode from localStorage, fallback to 'light'
 const savedMode = localStorage.getItem('themeMode') || 'light';
 
 const initialTheme = createTheme({
