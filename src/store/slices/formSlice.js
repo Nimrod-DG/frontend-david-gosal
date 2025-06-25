@@ -135,7 +135,6 @@ const formSlice = createSlice({
   },
 });
 
-
 export const selectTotalPrice = (state) => {
   const { selectedGood } = state.form;
   if (!selectedGood) return 0;

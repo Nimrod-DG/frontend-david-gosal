@@ -3,7 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Container, Typography, Card, CardContent, Grid, TextField, Autocomplete, Box, Alert, Chip } from '@mui/material';
 import { 
   loadCountries, loadPorts, loadGoods, setSelectedCountry, 
-  setSelectedPort, setSelectedGood, clearForm,setTouchedField,selectTotalPrice,formatDisplay,formatCurrency
+  setSelectedPort, setSelectedGood, clearForm, setTouchedField,
+  selectTotalPrice, formatDisplay, formatCurrency
 } from '../../store/slices/formSlice';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import ErrorMessage from '../../components/UI/ErrorMessage';
@@ -12,6 +13,7 @@ import toast, { Toaster } from 'react-hot-toast';
 const FormPage = () => {
   const dispatch = useDispatch();
   const [hasMounted, setHasMounted] = useState(false);
+  const [savedFormState, setSavedFormState] = useState(null);
   
   const { isAuthenticated } = useSelector((state) => state.auth);
   const { 
@@ -28,17 +30,58 @@ const FormPage = () => {
   
   const total = useSelector(selectTotalPrice);
 
+  // Load initial data and saved state
   useEffect(() => {
     if (isAuthenticated) {
-      const savedFormState = JSON.parse(localStorage.getItem('formState')) || {};
-      if (savedFormState.selectedCountry) dispatch(setSelectedCountry(savedFormState.selectedCountry));
-      if (savedFormState.selectedPort) dispatch(setSelectedPort(savedFormState.selectedPort));
-      if (savedFormState.selectedGood) dispatch(setSelectedGood(savedFormState.selectedGood));
+      const savedState = JSON.parse(localStorage.getItem('formState')) || {};
+      setSavedFormState(savedState);
       dispatch(loadCountries());
       setHasMounted(true);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, dispatch]);
 
+  // Restore country and load its ports
+  useEffect(() => {
+    if (hasMounted && savedFormState?.selectedCountry && countries.length > 0) {
+      const country = countries.find(
+        c => c.id_negara === savedFormState.selectedCountry.id_negara
+      );
+      
+      if (country) {
+        dispatch(setSelectedCountry(country));
+        dispatch(loadPorts(country.id_negara));
+      }
+    }
+  }, [countries, hasMounted, savedFormState, dispatch]);
+
+  // Restore port and load its goods
+  useEffect(() => {
+    if (hasMounted && savedFormState?.selectedPort && ports.length > 0) {
+      const port = ports.find(
+        p => p.id_pelabuhan === savedFormState.selectedPort.id_pelabuhan
+      );
+      
+      if (port) {
+        dispatch(setSelectedPort(port));
+        dispatch(loadGoods(port.id_pelabuhan));
+      }
+    }
+  }, [ports, hasMounted, savedFormState, dispatch]);
+
+  // Restore goods selection
+  useEffect(() => {
+    if (hasMounted && savedFormState?.selectedGood && goods.length > 0) {
+      const good = goods.find(
+        g => g.id_barang === savedFormState.selectedGood.id_barang
+      );
+      
+      if (good) {
+        dispatch(setSelectedGood(good));
+      }
+    }
+  }, [goods, hasMounted, savedFormState, dispatch]);
+
+  // Save form state to localStorage
   useEffect(() => {
     if (hasMounted && isAuthenticated) {
       localStorage.setItem('formState', JSON.stringify({
@@ -49,12 +92,13 @@ const FormPage = () => {
     }
   }, [selectedCountry, selectedPort, selectedGood, hasMounted, isAuthenticated]);
 
+  // Clear form when logging out
   useEffect(() => {
     if (!isAuthenticated && hasMounted) {
       dispatch(clearForm());
       localStorage.removeItem('formState');
     }
-  }, [isAuthenticated, hasMounted]);
+  }, [isAuthenticated, hasMounted, dispatch]);
 
   const handleSelectionChange = (type, newValue) => {
     dispatch(setTouchedField({ field: type, touched: true }));
@@ -92,12 +136,40 @@ const FormPage = () => {
   );
 
   if (loading && countries.length === 0) {
-    return <LoadingSpinner message="Loading countries..." />;
+    return (
+      <>
+        <LoadingSpinner message="Loading countries..." />
+        <Container maxWidth="lg" sx={{ visibility: 'hidden' }}>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" component="h1" gutterBottom>
+              Product Selection Form
+            </Typography>
+          </Box>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={8}>
+              <Card>
+                <CardContent>
+                  <Grid container spacing={3}>
+                    {[1, 2, 3].map((item) => (
+                      <Grid item xs={12} key={item}>
+                        <TextField fullWidth disabled />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </Container>
+      </>
+    );
   }
 
   return (
     <Container maxWidth="lg">
       <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
+      
+      {loading && <LoadingSpinner message="Loading data..." />}
       
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
