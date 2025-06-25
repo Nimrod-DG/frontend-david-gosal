@@ -2,17 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Container, Typography, Card, CardContent, Grid, TextField, Autocomplete, Box, Alert, Chip } from '@mui/material';
 import { 
-  loadCountries, 
-  loadPorts, 
-  loadGoods, 
-  setSelectedCountry, 
-  setSelectedPort, 
-  setSelectedGood, 
-  clearForm,
-  setTouchedField,
-  selectTotalPrice,
-  formatDisplay,
-  formatCurrency
+  loadCountries, loadPorts, loadGoods, setSelectedCountry, 
+  setSelectedPort, setSelectedGood, clearForm,setTouchedField,selectTotalPrice,formatDisplay,formatCurrency
 } from '../../store/slices/formSlice';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import ErrorMessage from '../../components/UI/ErrorMessage';
@@ -91,7 +82,6 @@ const FormPage = () => {
     localStorage.removeItem('formState');
   };
 
-  // UI components
   const SelectionSummaryItem = ({ label, value, color }) => (
     <Box sx={{ mb: 2 }}>
       <Typography variant="body2" color="text.secondary" gutterBottom>

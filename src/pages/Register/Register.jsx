@@ -2,16 +2,7 @@ import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import {
-  Container,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  Box,
-  Alert,
-  InputAdornment,
-  IconButton,
+import {Container,Paper,TextField,Button,Typography,Box,Alert,InputAdornment,IconButton,
 } from '@mui/material'
 import { Person, Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material'
 import { registerUser } from '../../store/slices/authSlice'
