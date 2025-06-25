@@ -126,14 +126,6 @@ src/
 - User-friendly error messages
 - Retry functionality for failed requests
 
-## Build for Production
-
-```bash
-npm run build
-```
-
-The built files will be in the `dist` directory.
-
 ## Environment Variables
 
 No environment variables are required for this demo application as it uses hardcoded API endpoints.
